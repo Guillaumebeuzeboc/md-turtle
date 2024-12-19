@@ -6,7 +6,7 @@
 #include <SPIFFS.h>
 #include "params.h"
 
-//onst char* accessToken = "SAMPLE_TOKEN_HERE";
+// const char* accessToken = "SAMPLE_TOKEN_HERE";
 
 // STT Config
 const char* bucketName = "mangdang_voice";
