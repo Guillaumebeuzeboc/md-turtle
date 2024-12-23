@@ -256,7 +256,7 @@ void MovementDance() {
   int timewalk1 = 8;
   int timewalk2 = 16;
   int loop_times = 6;
-  int stepDelay = 30;
+  int stepDelay = 500;//30;
 
   unsigned char LF_angle_slow[] = {110, 109, 108, 107, 105, 104, 102, 100,  98,  95,  92,  89,  85,  81,76,  70,  63,  57,  51,  47,  43,  39,  37,  34,  32,  31,  29,  28,27,  27,  26,  26,  25};
   unsigned char LB_angle_slow[] = {160, 159, 157, 155, 153, 150, 148, 145, 142, 138, 134, 130, 126, 120,115, 109, 102,  96,  91,  87,  83,  81,  78,  77,  75,  74,  73,  72,71,  71,  70,  70,  70};
@@ -272,14 +272,15 @@ void MovementDance() {
     for (int j = 0; j <= timewalk1; j++){
       servo1.write(int(LF_angle_fast[j]) - osang[0]);
       servo2.write(int(LB_angle_fast[j]) - osang[1]);
+      //delay(stepDelay/10);
       servo3.write(int(RF_angle_fast[j]) + osang[2]);
       servo4.write(int(RB_angle_fast[j]) + osang[3]);
-      delay(stepDelay);
+      //delay(stepDelay/10);
     }
-
     for (int j = 0; j <= 2 * timewalk2; j++){
       servo1.write(int(LF_angle_slow[2 * timewalk2 - j]) - osang[0]);
       servo2.write(int(LB_angle_slow[2 * timewalk2 - j]) - osang[1]);
+      //delay(stepDelay/10);
       servo3.write(int(RF_angle_slow[2 * timewalk2 - j]) + osang[2]);
       servo4.write(int(RB_angle_slow[2 * timewalk2 - j]) + osang[3]);
       delay(stepDelay);

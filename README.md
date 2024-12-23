@@ -37,6 +37,9 @@ To run this project, you will need the following hardware components:
    - Then, go to `Sketch > Include Library > Manage Libraries`, search for and install `ESP32Servo`, the version "3.0.5" is recommended.
    - If you see any notifications for updates, press "install all". 
 
+**Add additional libraries**
+- Adafruit NeoPixel
+
 ### Configure Board Settings in Arduino IDE
 
 4. **Board Configuration:**
@@ -57,6 +60,14 @@ To run this project, you will need the following hardware components:
      ```
    - Copy and paste the token back into your code.
    - Press "Edit" in arduino ide top toolbar and then "Replace in Files", replace "mangdang_voice" with your own bucket name, then replace "modern-rex-420404 with your own project id of google cloud.
+
+- Replace the wifi ssid and password with yours
+
+- enable VERTEX AI API in the gcp interface
+
+- enable the SPEACH API in the GCP interface
+
+- To get a permanent token, it's better to create a service account and then from the json we get, we generate a token. It lasts longer.
 
 ### Uploading the Code
 

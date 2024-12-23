@@ -148,12 +148,14 @@ void listSPIFFS(void) {
 }
 
 void i2s_adc_data_scale(uint8_t* d_buff, uint8_t* s_buff, uint32_t len) {
-  uint32_t j = 0;
-  uint32_t dac_value = 0;
+  uint16_t dac_value = 0;
   for (int i = 0; i < len; i += 2) {
-    dac_value = ((((uint16_t)(s_buff[i + 1] & 0xf) << 8) | ((s_buff[i + 0]))));
-    d_buff[j++] = 0;
-    d_buff[j++] = dac_value * 256 / 2048;
+    dac_value = (((uint16_t)(s_buff[i + 1] & 0xf) << 8) | (s_buff[i]));
+    d_buff[i] = 0;
+    d_buff[i+1] = dac_value * 256 / 2048;
+    // d_buff[i] = s_buff[i];
+    // d_buff[i+1] = s_buff[i+1];
+    
   }
 }
 
@@ -177,8 +179,9 @@ void record() {
 
   // config i2s
   Serial.println("config i2s!");
-  i2s_chan_handle_t* rx_handle = nullptr;
-  rx_handle = new i2s_chan_handle_t();
+  //i2s_chan_handle_t* rx_handle = nullptr;
+  i2s_chan_handle_t rx_handle;
+  //rx_handle = new i2s_chan_handle_t();
   i2s_chan_config_t chan_cfg = {
     .id = I2S_NUM_0,
     .role = I2S_ROLE_MASTER,
@@ -186,7 +189,7 @@ void record() {
     .dma_frame_num = I2S_FRAME_NUM,
     .auto_clear = true,
   };
-  i2s_new_channel(&chan_cfg, NULL, rx_handle);
+  i2s_new_channel(&chan_cfg, NULL, &rx_handle);
 
   i2s_std_config_t std_cfg = {
     .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(I2S_SAMPLE_RATE),
@@ -205,8 +208,10 @@ void record() {
     },
   };
   std_cfg.slot_cfg.slot_mask = I2S_STD_SLOT_RIGHT;
-  i2s_channel_init_std_mode(*rx_handle, &std_cfg);
-  i2s_channel_enable(*rx_handle);
+  //i2s_channel_init_std_mode(*rx_handle, &std_cfg);
+  i2s_channel_init_std_mode(rx_handle, &std_cfg);
+  //i2s_channel_enable(*rx_handle);
+  i2s_channel_enable(rx_handle);
 
   // start record
   Serial.println("start record");
@@ -214,35 +219,52 @@ void record() {
   int flash_wr_size = 0;
   size_t bytes_read;
 
-  char* i2s_read_buff = (char*)calloc(i2s_read_len, sizeof(char));
-  uint8_t* flash_write_buff = (uint8_t*)calloc(i2s_read_len, sizeof(char));
+  //char* i2s_read_buff = (char*)calloc(i2s_read_len, sizeof(char));
+  char i2s_read_buff[i2s_read_len];
+  //uint8_t* flash_write_buff = (uint8_t*)calloc(i2s_read_len, sizeof(char));
+  uint8_t flash_write_buff[i2s_read_len];
 
   // i2s_read(I2S_PORT, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
   // i2s_read(I2S_PORT, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-  i2s_channel_read(*rx_handle, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-  i2s_channel_read(*rx_handle, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+  //i2s_channel_read(*rx_handle, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+  //i2s_channel_read(*rx_handle, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+  i2s_channel_read(rx_handle, (void*)&i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+  i2s_channel_read(rx_handle, (void*)&i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
 
   Serial.println(" *** Recording Start *** ");
   while (flash_wr_size < FLASH_RECORD_SIZE) {
     // i2s_read(I2S_PORT, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-    i2s_channel_read(*rx_handle, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-    i2s_adc_data_scale(flash_write_buff, (uint8_t*)i2s_read_buff, i2s_read_len);
-    file.write((const byte*)flash_write_buff, i2s_read_len);
-    flash_wr_size += i2s_read_len;
+    //esp_err_t read_error = i2s_channel_read(*rx_handle, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+    esp_err_t read_error = i2s_channel_read(rx_handle, (void*)&i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+    if(read_error != ESP_OK) {
+      Serial.println(" Error while reading , this should not happen");
+      file.close();
+        return;
+    }
+    //i2s_adc_data_scale((uint8_t*)&flash_write_buff, (uint8_t*)&i2s_read_buff, i2s_read_len);
+    //i2s_adc_data_scale((uint8_t*)&flash_write_buff, (uint8_t*)&i2s_read_buff, bytes_read);
+    //file.write((const byte*)&flash_write_buff, i2s_read_len);
+    file.write((const byte*)&flash_write_buff, bytes_read);
+    //flash_wr_size += i2s_read_len;
+    flash_wr_size += bytes_read;
     // Serial.print(flash_wr_size * 100 / FLASH_RECORD_SIZE);
     // Serial.println("%");
   }
+  Serial.println(" *** Recording Done *** ");
   file.close();
+  Serial.println(" *** File closed *** ");
 
-  free(i2s_read_buff);
-  i2s_read_buff = NULL;
-  free(flash_write_buff);
-  flash_write_buff = NULL;
+  //free(i2s_read_buff);
+  //i2s_read_buff = NULL;
+  //free(flash_write_buff);
+  //flash_write_buff = NULL;
 
-  i2s_channel_disable(*rx_handle);
-  i2s_del_channel(*rx_handle);
-  delete rx_handle;
-  rx_handle = nullptr;
-
+  // i2s_channel_disable(*rx_handle);
+  // i2s_del_channel(*rx_handle);
+  i2s_channel_disable(rx_handle);
+  i2s_del_channel(rx_handle);
+  // delete rx_handle;
+  // rx_handle = nullptr;
+  Serial.println(" *** Record function done *** ");
   // listSPIFFS();
 }

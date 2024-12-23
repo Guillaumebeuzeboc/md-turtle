@@ -6,15 +6,15 @@
 #include <SPIFFS.h>
 #include "params.h"
 
-// const char* accessToken = "SAMPLE_TOKEN_HERE";
+const char* myAccessToken = "ya29.c.c0ASRK0GbyFB_cyPzvhcqCrL34CCQvje3y1NrECaqqtCU00qoNOcDA6Ovhm4aSNJLA21WwcKigFdmDiCl8KYSIqg25RkaDO4ts981h8fRW3camf0ED1B63mDThad-m1OTVMxKKpkEveAUxRse5-kz7u-ieyuC2jv2fIEJISjVgTvbJ3FjFnvzZZCCpaNctkgqQlhxFS-INt22z-F8dRJQ8sZSHDCqLem27YP3k1kwpFhx5hA7041-3PxTbRfckJW6zQpMqWiVNv9Lkzt3g8gk_Hb9z_E1-Va0Lz28b6xiUjl9VXyZToPjAUF8MnDnT5Oo9SEU1KtoIjIvs-wJLUPa1LicS2PYId88ewiZPO0CfOss59gZHUELhp9YT384AY3093hj3ZciOZg1Syy2cdbz00ytUBhioVkRofrprtb4YYyXW4xx0sYIoU7Xh2xX0Idl5sfQybVzRfYxrVhXQakqIMwlW41axyk7X2U8_d0Onjqq5OdnxS6Mzjqk5M-wOYqJlfe13Rlm_k6etbib9x0SgW3cFu13bpVbIrziuxyU1V-XFdisd26mkvpuSo1Qud1_ou4_evSSZMWsm_v_Wc5aYmR2pYRVk81QzO2n0xISF0FouwXV1ptnjSso2x17tjz1agbzWz70Fqm-yw8u4wk6_v6p3xiieU5Xd7UrMuz_Uc79w6zew6Re_X_eaMnQOzlWJhVcMd8nrrJqIVi4qdzorticxQ5JMcBOubnpw_qz-dj4FirnsX4bhecrV02uaIgb5YvcurznFegjlVRR32g4c39-cS6ufkeuaazs55S_79oFMVWltafSh9z20l5u1XxnWvdamxy8kiIQhg72yQxfe1a7d6l-ksjRs3zR6ai4s3tuyyqFbu-yJY5706YzMZic2Qse_i6e7sp-1J7f354XQ-kYQrfn9RmjighOW2BS3e7X2it42MRmnS03hBW1vev7BeOIgze0hnZydVsBSp8vtY5hwI9YaY_e25Q_lw-zVUIQj3zFviUurs10";
 
 // STT Config
-const char* bucketName = "mangdang_voice";
-const char* audioContent = "gs://mangdang_voice/audio.wav";
-const char* gcAdd = "https://storage.googleapis.com/upload/storage/v1/b/mangdang_voice/o?uploadType=media&name=audio.wav";
+const char* bucketName = "beuzeboc-turtle";
+const char* audioContent = "gs://beuzeboc-turtle/audio.wav";
+const char* gcAdd = "https://storage.googleapis.com/upload/storage/v1/b/beuzeboc-turtle/o?uploadType=media&name=audio.wav";
 
 // Gemini API Config
-const char* apiURL = "https://us-central1-aiplatform.googleapis.com/v1/projects/modern-rex-420404/locations/us-central1/publishers/google/models/gemini-1.5-flash:streamGenerateContent?alt=sse";
+const char* apiURL = "https://europe-west1-aiplatform.googleapis.com/v1/projects/lithe-bonito-212721/locations/europe-west1/publishers/google/models/gemini-1.5-flash-002:streamGenerateContent?alt=sse";
 
 
 void uploadFile() {
@@ -32,8 +32,12 @@ void uploadFile() {
   // String url = "https://storage.googleapis.com/upload/storage/v1/b/" + String(_bucketName) + "/o?uploadType=media&name=audio.wav";
   Serial.print("Connecting to URL: ");
   Serial.println(gcAdd);
-  _http.begin(gcAdd);
-  _http.addHeader("Authorization", "Bearer " + String(accessToken));
+  if(!_http.begin(gcAdd)){
+    Serial.println("Failed to begin http request with gcAdd");
+    file.close();
+    return;
+  }
+  _http.addHeader("Authorization", "Bearer " + String(myAccessToken));
   _http.addHeader("Content-Type", "application/octet-stream");
 
   Serial.println("Sending POST request...");
@@ -53,19 +57,19 @@ void uploadFile() {
   Serial.println("File closed and HTTP connection ended");
 }
 
-const String speechRequestData = "{\"config\": {\"encoding\":\"LINEAR16\",\"languageCode\":\"en-US\",\"enableWordTimeOffsets\":false},\"audio\":{\"uri\":\"gs://mangdang_voice/audio.wav\"}}";
+const String speechRequestData = "{\"config\": {\"encoding\":\"LINEAR16\",\"languageCode\":\"en-US\",\"enableWordTimeOffsets\":false},\"audio\":{\"uri\":\"gs://beuzeboc-turtle/audio.wav\"}}";
 String speechToText() {
   Serial.println("Speech to text start.");
   HTTPClient _http;
 
   _http.begin("https://speech.googleapis.com/v1/speech:recognize");
   _http.addHeader("Content-Type", "application/json");
-  _http.addHeader("Authorization", "Bearer " + String(accessToken));
+  _http.addHeader("Authorization", "Bearer " + String(myAccessToken));
   _http.addHeader("User-Agent", "PostmanRuntime/7.40.0");
   _http.addHeader("Accept", "*/*");
   _http.addHeader("Accept-Encoding", "gzip, deflate, br");
   _http.addHeader("Connection", "keep-alive");
-  _http.addHeader("x-goog-user-project", "modern-rex-420404");
+  _http.addHeader("x-goog-user-project", "lithe-bonito-212721");
 
   Serial.println("Speech request.");
   Serial.println("Speech request post start.");
@@ -103,7 +107,7 @@ String generateJsonString(String text) {
          "\"contents\": ["
          "{"
          "\"role\": \"USER\","
-         "\"parts\": { \"text\": \"Now, you are a small female robo turtle, your name is Amy. You will be a helpful AI assistent. Your LLM api is connected to STT and TTS models so you are able to hear the user.\" }"
+         "\"parts\": { \"text\": \"Now, you are a small female robo turtle, your name is Amy. You will be a helpful AI assistant. Your LLM api is connected to STT and TTS models so you are able to hear the user.\" }"
          "},"
          "{"
          "\"role\": \"MODEL\","
@@ -135,7 +139,7 @@ String llm_response(String transcript) {
   Serial.println("Start sending HTTP POST request...");
   _http.begin(apiURL);
   _http.addHeader("Content-Type", "application/json");
-  _http.addHeader("Authorization", "Bearer " + String(accessToken));
+  _http.addHeader("Authorization", "Bearer " + String(myAccessToken));
 
   // Constrct JSON data
   // String jsonData = "{\"contents\": {\"role\": \"user\", \"parts\": [{\"text\": \"" + transcript + "\"}]}}";

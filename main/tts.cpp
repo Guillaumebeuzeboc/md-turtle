@@ -76,4 +76,5 @@ void tts(String text) {
   Serial.println("free Audio instance.");
   delete audio;
   audio = nullptr;
+  Serial.println("Audio freed.");
 }
