@@ -165,23 +165,26 @@ void record() {
   int flash_wr_size = 0;
   size_t bytes_read = 0;
 
-  int16_t i2s_read_buff[I2S_FRAME_NUM];
-  int16_t flash_write_buff[I2S_FRAME_NUM];
+  // we create double the size because DMA space is not enough.
+  // At 16Khz, we take 200 ms to write in the flash.
+  // It means, we must be able to store 3200 sample.
+  // We have 1024*64 sample. So toward the end, we accumulate some late.
+  // One buffer of 1024 sample represent 64ms at 16khz.
+  int16_t i2s_read_buff[I2S_FRAME_NUM*2];
+  //int16_t flash_write_buff[I2S_FRAME_NUM];
   //uint8_t flash_write_buff[I2S_READ_LEN/2];
 
   // i2s_channel_read(rx_handle, (void*)&i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
   // i2s_channel_read(rx_handle, (void*)&i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-  unsigned int before=0, after=0;
 
   Serial.println(" *** Recording Start *** ");
-  int16_t temp_flash_content[FLASH_RECORD_SIZE/2];
-  Serial.println("flash record size: " + String(FLASH_RECORD_SIZE));
+  //int16_t temp_flash_content[FLASH_RECORD_SIZE/2];
   
 
   while (flash_wr_size < FLASH_RECORD_SIZE) {
     // i2s_read(I2S_PORT, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
     //esp_err_t read_error = i2s_channel_read(*rx_handle, (void*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-    esp_err_t read_error = i2s_channel_read(rx_handle, (void*)&i2s_read_buff, I2S_FRAME_NUM, &bytes_read, portMAX_DELAY);
+    esp_err_t read_error = i2s_channel_read(rx_handle, (void*)&i2s_read_buff, I2S_FRAME_NUM*4, &bytes_read, portMAX_DELAY);
     if(read_error != ESP_OK) {
       Serial.println(" Error while reading , this should not happen!");
       file.close();
@@ -192,13 +195,11 @@ void record() {
     //i2s_adc_data_scale((uint8_t *)&flash_write_buff, (uint8_t*)&i2s_read_buff, bytes_read);
     //file.write((const byte*)&flash_write_buff, bytes_read);
     //file.write((const byte*)i2s_read_buff, bytes_read/2);
-    before = micros();
     file.write((const byte*)i2s_read_buff, bytes_read);
-    after = micros();
     //flash_wr_size += bytes_read/2;
     flash_wr_size += bytes_read;
   }
-  Serial.println("time to write: " + String((after-before)));
+  Serial.println("bytes_read" + String(bytes_read));
   Serial.println("flash_wr_size: " + String(flash_wr_size));
   Serial.println(" *** Recording Done *** ");
   file.close();
